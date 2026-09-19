@@ -29,6 +29,12 @@ export const AuthModal = ({ isOpen, onClose, onToast }) => {
     if (code.includes('invalid-email')) {
       return 'Sahi Email address enter karein.';
     }
+    if (code.includes('configuration-not-found')) {
+      return 'Firebase Console me Authentication shuru nahi hai! Firebase Console > Build > Authentication me jakar "Get started" dabayein aur Email/Password enable karein.';
+    }
+    if (code.includes('operation-not-allowed')) {
+      return 'Yeh sign-in method Firebase Console me enabled nahi hai. Kripya Firebase Console > Authentication me jakar ise enable karein.';
+    }
     if (code.includes('popup-closed-by-user')) {
       return 'Google sign-in popup band kar diya gaya.';
     }

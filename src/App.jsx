@@ -3,6 +3,7 @@ import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { Toast } from './components/common/Toast';
 import { QuickSearchModal } from './components/common/QuickSearchModal';
+import { AuthModal } from './components/common/AuthModal';
 import { WhatsAppFloat } from './components/common/WhatsAppFloat';
 
 import { HomePage } from './pages/HomePage';
@@ -12,6 +13,7 @@ import { CartPage } from './pages/CartPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 
+import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { PRODUCTS } from './data/products';
@@ -21,6 +23,7 @@ export default function App() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
 
   // Toast notification helper
@@ -58,7 +61,7 @@ export default function App() {
         setActivePage('contact');
       } else if (hash.startsWith('product/')) {
         const prodId = hash.replace('product/', '');
-        const found = PRODUCTS.find((p) => p.id === prodId);
+        const found = PRODUCTS.find((p) => p.id.toLowerCase() === prodId.toLowerCase());
         if (found) {
           setSelectedProduct(found);
           setActivePage('product');
@@ -107,105 +110,115 @@ export default function App() {
   };
 
   return (
-    <CartProvider onToast={showToast}>
-      <WishlistProvider onToast={showToast}>
-        <div className="app-layout" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          {/* Header Navigation */}
-          <Navbar
-            activePage={activePage}
-            onNavigate={handleNavigate}
-            onOpenSearch={() => setIsSearchOpen(true)}
-          />
+    <AuthProvider>
+      <CartProvider onToast={showToast}>
+        <WishlistProvider onToast={showToast}>
+          <div className="app-layout" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {/* Header Navigation */}
+            <Navbar
+              activePage={activePage}
+              onNavigate={handleNavigate}
+              onOpenSearch={() => setIsSearchOpen(true)}
+              onOpenAuth={() => setIsAuthOpen(true)}
+            />
 
-          {/* Main Content Area */}
-          <main style={{ flex: 1 }}>
-            {activePage === 'home' && (
-              <HomePage
-                onNavigate={handleNavigate}
-                onSelectProduct={handleSelectProduct}
-                onToast={showToast}
-              />
-            )}
+            {/* Main Content Area */}
+            <main style={{ flex: 1 }}>
+              {activePage === 'home' && (
+                <HomePage
+                  onNavigate={handleNavigate}
+                  onSelectProduct={handleSelectProduct}
+                  onToast={showToast}
+                />
+              )}
 
-            {activePage === 'shop' && (
-              <ShopPage
-                key={`shop-${categoryFilter}`}
-                categoryInitial={categoryFilter}
-                onSelectProduct={handleSelectProduct}
-                onNavigate={handleNavigate}
-              />
-            )}
+              {activePage === 'shop' && (
+                <ShopPage
+                  key={`shop-${categoryFilter}`}
+                  categoryInitial={categoryFilter}
+                  onSelectProduct={handleSelectProduct}
+                  onNavigate={handleNavigate}
+                />
+              )}
 
-            {activePage === 'men' && (
-              <ShopPage
-                key="shop-men"
-                categoryInitial="Men"
-                onSelectProduct={handleSelectProduct}
-                onNavigate={handleNavigate}
-              />
-            )}
+              {activePage === 'men' && (
+                <ShopPage
+                  key="shop-men"
+                  categoryInitial="Men"
+                  onSelectProduct={handleSelectProduct}
+                  onNavigate={handleNavigate}
+                />
+              )}
 
-            {activePage === 'women' && (
-              <ShopPage
-                key="shop-women"
-                categoryInitial="Women"
-                onSelectProduct={handleSelectProduct}
-                onNavigate={handleNavigate}
-              />
-            )}
+              {activePage === 'women' && (
+                <ShopPage
+                  key="shop-women"
+                  categoryInitial="Women"
+                  onSelectProduct={handleSelectProduct}
+                  onNavigate={handleNavigate}
+                />
+              )}
 
-            {activePage === 'kids' && (
-              <ShopPage
-                key="shop-kids"
-                categoryInitial="Kids"
-                onSelectProduct={handleSelectProduct}
-                onNavigate={handleNavigate}
-              />
-            )}
+              {activePage === 'kids' && (
+                <ShopPage
+                  key="shop-kids"
+                  categoryInitial="Kids"
+                  onSelectProduct={handleSelectProduct}
+                  onNavigate={handleNavigate}
+                />
+              )}
 
-            {activePage === 'product' && (
-              <ProductDetailPage
-                key={`product-${selectedProduct.id}`}
-                product={selectedProduct}
-                onSelectProduct={handleSelectProduct}
-                onNavigate={handleNavigate}
-              />
-            )}
+              {activePage === 'product' && (
+                <ProductDetailPage
+                  key={`product-${selectedProduct.id}`}
+                  product={selectedProduct}
+                  onSelectProduct={handleSelectProduct}
+                  onNavigate={handleNavigate}
+                />
+              )}
 
-            {activePage === 'cart' && (
-              <CartPage
-                onNavigate={handleNavigate}
-                onSelectProduct={handleSelectProduct}
-              />
-            )}
+              {activePage === 'cart' && (
+                <CartPage
+                  onNavigate={handleNavigate}
+                  onSelectProduct={handleSelectProduct}
+                />
+              )}
 
-            {activePage === 'about' && (
-              <AboutPage onNavigate={handleNavigate} />
-            )}
+              {activePage === 'about' && (
+                <AboutPage onNavigate={handleNavigate} />
+              )}
 
-            {activePage === 'contact' && (
-              <ContactPage onToast={showToast} />
-            )}
-          </main>
+              {activePage === 'contact' && (
+                <ContactPage onToast={showToast} />
+              )}
+            </main>
 
-          {/* Footer */}
-          <Footer onNavigate={handleNavigate} />
+            {/* Footer */}
+            <Footer onNavigate={handleNavigate} />
 
-          {/* Floating WhatsApp Quick Action Button */}
-          <WhatsAppFloat />
+            {/* Floating WhatsApp Quick Action Button */}
+            <WhatsAppFloat />
 
-          {/* Instant Search Modal */}
-          <QuickSearchModal
-            isOpen={isSearchOpen}
-            onClose={() => setIsSearchOpen(false)}
-            onSelectProduct={handleSelectProduct}
-            onNavigate={handleNavigate}
-          />
+            {/* Instant Search Modal */}
+            <QuickSearchModal
+              isOpen={isSearchOpen}
+              onClose={() => setIsSearchOpen(false)}
+              onSelectProduct={handleSelectProduct}
+              onNavigate={handleNavigate}
+            />
 
-          {/* Toast Notification Layer */}
-          <Toast toasts={toasts} />
-        </div>
-      </WishlistProvider>
-    </CartProvider>
+            {/* Authentication Modal (Login / Sign Up) */}
+            <AuthModal
+              isOpen={isAuthOpen}
+              onClose={() => setIsAuthOpen(false)}
+              onToast={showToast}
+            />
+
+            {/* Toast Notification Layer */}
+            <Toast toasts={toasts} />
+          </div>
+        </WishlistProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 }

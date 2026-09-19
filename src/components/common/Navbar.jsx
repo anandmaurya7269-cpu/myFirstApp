@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Search, ShoppingBag, Heart, Menu, X, ChevronRight, Phone } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, ShoppingBag, Heart, Menu, X, ChevronRight, Phone, User, LogOut } from 'lucide-react';
 import { SITE_CONFIG } from '../../config/siteConfig';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import { useAuth } from '../../context/AuthContext';
 
-export const Navbar = ({ activePage, onNavigate, onOpenSearch }) => {
+export const Navbar = ({ activePage, onNavigate, onOpenSearch, onOpenAuth }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
   const { totalItemsCount } = useCart();
   const { wishlistCount } = useWishlist();
+  const { currentUser, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +20,17 @@ export const Navbar = ({ activePage, onNavigate, onOpenSearch }) => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Close mobile menu on page switch
@@ -176,6 +191,102 @@ export const Navbar = ({ activePage, onNavigate, onOpenSearch }) => {
               {totalItemsCount > 0 && <span className="icon-badge">{totalItemsCount}</span>}
             </button>
 
+            {/* User Account / Auth Menu */}
+            <div className="user-menu-wrapper" ref={userMenuRef} style={{ position: 'relative' }}>
+              {currentUser ? (
+                <button
+                  className="icon-btn"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  aria-label="Account Menu"
+                  title={currentUser.displayName || currentUser.email}
+                  style={{
+                    background: 'var(--accent-gold-light)',
+                    color: 'var(--accent-gold-hover)',
+                    fontWeight: '700',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  {currentUser.photoURL ? (
+                    <img
+                      src={currentUser.photoURL}
+                      alt="User"
+                      style={{ width: '24px', height: '24px', borderRadius: '50%' }}
+                    />
+                  ) : (
+                    <span>
+                      {(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <button
+                  className="icon-btn"
+                  onClick={onOpenAuth}
+                  aria-label="Sign In"
+                  title="Sign In / Register"
+                >
+                  <User size={20} />
+                </button>
+              )}
+
+              {/* Dropdown Menu when Logged In */}
+              {currentUser && isUserMenuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 10px)',
+                    right: 0,
+                    width: '240px',
+                    background: '#ffffff',
+                    boxShadow: 'var(--shadow-lg)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-light)',
+                    padding: '16px',
+                    zIndex: 200,
+                    animation: 'fadeIn 0.2s ease'
+                  }}
+                >
+                  <div style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '12px', marginBottom: '12px' }}>
+                    <div style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                      {currentUser.displayName || 'Customer'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', wordBreak: 'break-word' }}>
+                      {currentUser.email}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      logout();
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--danger)',
+                      fontSize: '0.88rem',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      textAlign: 'left',
+                      transition: 'var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    <LogOut size={16} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Mobile Menu Toggle Button */}
             <button
               className="icon-btn mobile-menu-btn"
@@ -208,6 +319,56 @@ export const Navbar = ({ activePage, onNavigate, onOpenSearch }) => {
         </div>
 
         <div className="mobile-drawer-links">
+          {/* User Status Banner */}
+          <div style={{ padding: '12px 14px', background: 'var(--bg-cream)', borderRadius: 'var(--radius-sm)', marginBottom: '14px' }}>
+            {currentUser ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                <div>
+                  <div style={{ fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                    {currentUser.displayName || 'Customer'}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    {currentUser.email}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileOpen(false);
+                    logout();
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--danger)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    padding: '4px 8px'
+                  }}
+                >
+                  <LogOut size={14} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileOpen(false);
+                  onOpenAuth();
+                }}
+                className="btn btn-primary btn-block btn-sm"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                <User size={16} />
+                <span>Sign In / Register</span>
+              </button>
+            )}
+          </div>
           <a
             href="#home"
             className={`mobile-nav-link ${activePage === 'home' ? 'active' : ''}`}
